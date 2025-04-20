@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Documenting
+{% endblock %}
+
+{% block body %}
+
+
+    <div id="page-specific-form">
+        <h1 style="font-family: 'Lucida Handwriting', cursive; font-size: 2.5em;" ><b>Workout Tracker</b></h1>
+        <form method="post" action="/homepage">
+            <div class="form-group">
+                <label>Date: </label>
+                <input autocomplete="off" autofocus type="date" name="date" placeholder="Date" required>
+            </div>
+
+            <div class="form-group">
+                <label>Activity: </label>
+                <input autocomplete="off" autofocus type="text" name="mode" placeholder="Activity" required>
+            </div>
+
+            <div class="form-group">
+                <label>Starting Time: </label>
+                <input autocomplete="off" autofocus type="time" name="start" placeholder="Starting time" required>
+            </div>
+
+            <div class="form-group">
+                <label>Ending Time: </label>
+                <input autocomplete="off" autofocus type="time" name="end" placeholder="Ending time" required>
+            </div>
+
+            <div class="form-group">
+                <label>Weight:
+                    <select name="unit" required>
+                        <option value="" disabled selected>Unit</option>
+                        {% for w in weight %}
+                            <option value="{{ w }}">{{ w }}</option>
+                        {% endfor %}                    
+                    </select>
+                </label>
+
+                <input autocomplete="off" autofocus type="number" name="weight" placeholder="Weight" required>
+            </div>
+
+            <div class="form-group">
+                <label>Consumption: </label>
+                <input autocomplete="off" autofocus type="number" name="energy" placeholder="Consumption" required>
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <table>
+        <caption>Data Summary</caption>
+        <thead>
+           <tr>
+                <th>Date</th>
+                <th>Activity</th>
+                <th>Starting Time (24 hr format)</th>
+                <th>Ending Time (24 hr format)</th>
+                <th>Weight</th>
+                <th>Consumption</th>
+                <th>Duration(Min)</th>
+           </tr> 
+        </thead>
+        <tbody>
+            {% if rows %}
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ row["date"] }}</td>
+                        <td>{{ row["mode"] }}</td>
+                        <td>{{ row["start"] }}</td>
+                        <td>{{ row["end"] }}</td>
+                        <td>{{ row["weight"] }} {{ row["unit"] }}</td>
+                        <td>{{ row["energy"] }}</td>
+                        <td>{{ row["dur"]/60 }}</td>
+                        <td>
+                            <form method="post" action="/delete">
+                                <input type="hidden" name="num" value="{{ row.unid }}">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No data found</td>
+                    </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    
+
+    <footer>
+        <a href="/logout" style="text-decoration: none; color: black;">Log Out</a>
+        <a href="/progress" style="text-decoration: none; color: black;">Progress</a>
+    </footer>
+{% endblock%}

@@ -1,0 +1,277 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Progress
+{% endblock %}
+
+{% block body %}
+    <div id="page-specific">
+        <h1 style="font-family: 'Lucida Handwriting', cursive; font-size: 2.5em;" ><b>Daily Performance Chart</b></h1>
+        <form method="post" action="/progress">
+            <div class="form-group">
+                <label>Sleep: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="sleep" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div class="form-group">
+                <label>Meals: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="meals" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div class="form-group">
+                <label>House chores: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="chrs" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div class="form-group">
+                <label>Work: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="work" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div class="form-group">
+                <label>Reading: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="reading" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div class="form-group">
+                <label>Exercise: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="exercise" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div class="form-group">
+                <label>Others: </label>
+                <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="others" placeholder="Hour" required min="0" max="24">
+            </div>
+
+            <div id="cntring">
+                <label>Total: </label>
+                <input autocomplete="off" autofocus name="total" placeholder="Hour" step="0.01" id = "total" max="24">
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+        {% if activities %}
+            <h3>Overall Progress</h3>
+            <canvas id="Rchart" width="300" height="300"></canvas>
+        {% endif %}
+
+    </div>
+
+    <div class="sticky-note">
+        <h3>Notes</h3>
+        <textarea rows="8" cols="30" placeholder="Type here..."></textarea>
+        <button type="submit">Save</button>
+        <button type="submit">Clear</button>
+    </div>
+
+<!--linking chart.js-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let hrs = document.querySelectorAll('.hr');
+            let total = document.getElementById('total');
+            
+            function adding() {                         // creating the function  for adding
+                let sum = 0;
+                hrs.forEach(h => {
+                    sum += Number(h.value) || 0;
+                });
+
+ // here we are just saying to put the added number in total value
+
+                if (sum > 24) {
+                    total.value = 24;
+                }
+                else {
+                    total.value = sum;
+                }
+            }
+
+            hrs.forEach(h => {                           // now whenever we will be in one box we are updating the value by calling adding function
+                h.addEventListener('input', adding);
+            });
+
+            adding();                                  // dynamically calling adding function every time
+
+            let activity = JSON.parse('{{ activities | tojson | safe }}');
+            if (activity.length > 0) {
+                let name = activity.map(a => a.name);
+                let dur = activity.map(a => a.duration);
+                let clr = activity.map(a => a.color);
+
+                let ctx = document.getElementById('Rchart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: name,
+                        datasets: [{
+                            data: dur,
+                            backgroundColor: clr
+                        }]
+                    },
+
+                    options: {
+                        responsive: false,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom'},
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        let sets = tooltipItem.dataset;
+                                        let total = sets.data.reduce((acc, val) => acc + val, 0);
+                                        let value = sets.data[tooltipItem.dataIndex];
+                                        let percentage = ((value/total) * 100).toFixed(2) + '%';
+                                        return `${tooltipItem.label} : ${percentage}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    
+
+{% endblock %}
+
+
+
+#page-specific {
+    display: flex;
+    height: 60vh;
+    width: 100%;
+    padding: 20px 20px;
+    flex-direction: column;
+    gap: 20px;
+    background-color: #f2ade5;
+    border-bottom: 2px solid #f7f4f4;
+    box-sizing: border-box;
+
+}
+
+#page-specific h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    width: 30%;
+}
+
+#page-specific .form-group { /* Style the form groups */
+    display: flex;
+    flex-direction: row; /* Stack label and input vertically */
+    margin-bottom: 10px;
+    gap: 20px;
+}
+
+#page-specific label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+#page-specific input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #f1f3f5;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 10%;
+}
+
+
+#page-specific #cntring {
+    
+    top: 10%;
+    right: 35%;
+}
+
+#page-specific #cntring input {
+    width: 20%;
+    text-align: center;
+}
+
+#page-specific button {
+    width: 40%;
+    padding: 10px;
+    background-color: #886996;
+    color: #040109;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#page-specific button:hover {
+    background-color: #ba48eb;
+}
+
+#page-specific canvas {
+    display: block;
+    position: absolute;
+    top: 17%;
+    right: 0;
+}
+
+#page-specific h3 {
+    display: block;
+    position: absolute;
+    top: 12%;
+    right: 10px;
+}
+
+/* style for the sticky note */
+
+.sticky-note {
+    background-color: #fdfd96;
+    padding: 10px;
+    width: 220px;
+    text-align: left;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    position: relative;
+    bottom: 0px;
+    left: 70%;
+    margin-left: 20px;
+    transform: rotate(+3deg);
+    font-family: 'Patrick Hand', cursive;
+}
+
+.stick-note h3 {
+    font-size: 15px;
+    color: #858104;
+    margin-bottom: 10px;
+}
+
+.sticky-note textarea {
+    width: 90%;
+    height: 100px;
+    border: none;
+    background-color: transparent;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 14px;
+    color: #858104;
+    resize: none;
+    outline: none;
+    padding: 5px;
+}
+
+.sticky-note button {
+    width: 15%;
+    background-color: #e5c100;
+    color: black;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    margin: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}

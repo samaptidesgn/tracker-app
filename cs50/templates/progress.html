@@ -1,0 +1,206 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Progress
+{% endblock %}
+
+{% block body %}
+    <div id="parent-div">
+        <div id="first-child">
+            <h1 style="font-family: 'Lucida Handwriting', cursive;" ><b>Daily Performance Chart</b></h1>
+        </div>
+
+        <div id="sec-child">
+            <div id="block-1">
+                <p>(Scroll down to enter-)</p>
+                <form method="post" action="/progress">
+                    <div class="form-group">
+                        <label>Sleep: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="sleep" placeholder="Hour" required min="0" max="24">
+                    </div>
+                    <div class="form-group">
+                        <label>Meals: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="meals" placeholder="Hour" required min="0" max="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Chores: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="chrs" placeholder="Hour" required min="0" max="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Work: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="work" placeholder="Hour" required min="0" max="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reading: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="reading" placeholder="Hour" required min="0" max="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Exercise: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="exercise" placeholder="Hour" required min="0" max="24">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Others: </label>
+                        <input class = "hr" autocomplete="off" autofocus type="number" step="0.01" name="others" placeholder="Hour" required min="0" max="24">
+                    </div>
+
+                    <button type="Enter">Submit</button>
+                </form>        
+            </div>
+
+            <div id="block-2">
+                <form method="post" action="/progress">
+                    <label>Total Hour:</label>
+                    <input autocomplete="off" autofocus name="total" placeholder="Hour" step="0.01" id = "total" max="24">
+                </form>
+            
+            </div>
+
+            <div id="block-3">
+                <h3 style="font-family: 'Lucida Handwriting', cursive;">Overall Progress</h3>
+                {% if activities %}
+                    <canvas id="Rchart"></canvas>
+                {% endif %}
+            </div>
+        </div>
+
+
+        <div id="thir-child">
+            <div id="sec-1">
+                <h3 id="head" style="font-family: 'Lucida Handwriting', cursive;">To-Do list</h3>
+
+                <button id="add-task">+ add task</button>
+                <ol id="order-list"></ol>
+
+            </div>
+        </div>
+    </div>
+
+    <!--linking chart.js-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let hrs = document.querySelectorAll('.hr');
+            let total = document.getElementById('total');
+            
+            function adding() {                         // creating the function  for adding
+                let sum = 0;
+                hrs.forEach(h => {
+                    sum += Number(h.value) || 0;
+                });
+
+ // here we are just saying to put the added number in total value
+
+                if (sum > 24) {
+                    total.value = 24;
+                }
+                else {
+                    total.value = sum;
+                }
+            }
+
+            hrs.forEach(h => {                           // now whenever we will be in one box we are updating the value by calling adding function
+                h.addEventListener('input', adding);
+            });
+
+            adding();                                  // dynamically calling adding function every time
+
+            let activity = JSON.parse('{{ activities | tojson | safe }}');
+            if (activity.length > 0) {
+                let name = activity.map(a => a.name);
+                let dur = activity.map(a => a.duration);
+                let clr = activity.map(a => a.color);
+
+                let ctx = document.getElementById('Rchart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: name,
+                        datasets: [{
+                            data: dur,
+                            backgroundColor: clr
+                        }]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top'},
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        let sets = tooltipItem.dataset;
+                                        let total = sets.data.reduce((acc, val) => acc + val, 0);
+                                        let value = sets.data[tooltipItem.dataIndex];
+                                        let percentage = ((value/total) * 100).toFixed(2) + '%';
+                                        return `${tooltipItem.label} : ${percentage}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+
+            document.getElementById("add-task").addEventListener("click", function(e) {
+                e.preventDefault();                              // preventing the default behaviour of the button
+
+                if (document.getElementById("task-input")) return;
+                
+                let form = document.createElement("input");          // creating the input field for task name dynamically
+                form.setAttribute("type", "text",);
+                form.setAttribute("placeholder", "Enter task name",);
+                form.setAttribute("id", "task-input",);
+
+                let button = document.createElement("button");
+                button.innerHTML = "save";
+                button.setAttribute("id", "save-button",);
+
+                const container = document.getElementById("sec-1");                 // fetching the input field and button to the div
+                container.appendChild(form);
+                container.appendChild(button);
+
+                button.addEventListener("click", function(e) {
+                    e.preventDefault();                                             // preventing the default behaviour of the button with the form
+                    let task = form.value.trim();                                   // getting the value of the input field
+                    if (task.length > 0) {                                          // checking if the input field is empty or not
+                        let li = document.createElement("li");                      // creating the list element dynamically
+                        li.innerHTML = task;                                        // putting the value of the input field in the list element
+                        document.getElementById("order-list").appendChild(li);      // appending the list element to the ol tag
+
+                        let t = JSON.parse(localStorage.getItem("tasks")) || [];    // getting the tasks if existed, from the local storage in t variable(array) if there is no task then assigning an empty array to it
+                        t.push(task);                                               // pushing the task in the array
+                        localStorage.setItem("tasks", JSON.stringify(t));           // storing the task in the local storage in the form of string
+
+
+                        form.remove();                                              // removing the input field and button after adding the task
+                        button.remove();
+                    }
+                    else {
+                        alert("Please enter a task name.");                         // if the input field is empty then showing an alert message
+                    }
+                });
+            });
+
+            // using this function so that after refreshing the page, the previous task are there as a list
+            function loadTask() {
+                let ta = JSON.parse(localStorage.getItem("tasks")) || [];   
+                ta.forEach(t => {
+                    let li = document.createElement("li");                      // creating the list element dynamically
+                    li.innerHTML = t;                                        // putting the value of the input field in the list element
+                    document.getElementById("order-list").appendChild(li);      // appending the list element to the ol tag
+                });
+            }
+
+            loadTask();                                                     // calling the function to load the tasks from the local storage
+        });
+    </script>
+{% endblock %}

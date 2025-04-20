@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Log IN
+{% endblock %}
+
+{% block body %}
+    <h1 id="cntr">Euphoria</h1>
+    <div class="big-box">
+        <form action="/login" method="post">
+            <h2 style="text-align: center; font-family: Brush Script MT, cursive; color: blueviolet;">Welcome, Mate</h2>
+            <label>Username: </label>
+            <input autocomplete="off" autofocus type="text" placeholder="Username" name="name"><br><br>
+            <label>Password: </label>
+            <input autocomplete="off" autofocus type="password" placeholder="Password", name="password"><br><br>
+            <button type="submit">Log in</button>
+        </form>
+    </div>
+{% endblock%}
